@@ -1,0 +1,228 @@
+import { db } from "../db/client";
+import { tableRows, tables } from "../db/schema";
+import { generateEmbedding, generateChatCompletion } from "../openrouter";
+import { sql, eq, and, inArray } from "drizzle-orm";
+
+export interface FinancialAnswer {
+  answer: string;
+  values: Array<{
+    tableId: string;
+    tableName: string | null;
+    page: number;
+    rowLabel: string;
+    columnLabel: string;
+    period: string | null;
+    value: string;
+    numericValue: number | null;
+    unit: string | null;
+    contextAboveLines: string[];
+    contextBelowLines: string[];
+  }>;
+  citations: Array<{
+    documentName: string;
+    page: number;
+    tableId: string;
+  }>;
+  confidence: "high" | "medium" | "low" | "not_found";
+}
+
+/**
+ * Answer a financial/numeric question using table data
+ */
+export async function answerFinancialQuestion(
+  question: string,
+  documentIds?: number[]
+): Promise<FinancialAnswer> {
+  try {
+    // 1. Identify relevant table types from question
+    const targetTableTypes = identifyTableTypes(question);
+
+    // 2. Generate embedding for semantic search over row labels
+    const questionEmbedding = await generateEmbedding(question);
+
+    // 3. Find relevant table rows using vector similarity + table type filter
+    const whereClause =
+      documentIds && documentIds.length > 0
+        ? sql`WHERE document_id = ANY(${documentIds})`
+        : sql``;
+
+    const tableTypeFilter =
+      targetTableTypes.length > 0
+        ? sql`AND table_name = ANY(${targetTableTypes})`
+        : sql``;
+
+    const relevantRows = await db.execute(sql`
+      SELECT
+        id,
+        table_id,
+        document_id,
+        document_name,
+        page,
+        table_name,
+        row_label,
+        column_label,
+        period,
+        value,
+        numeric_value,
+        unit,
+        row_index,
+        column_index,
+        1 - (embedding <=> ${JSON.stringify(questionEmbedding)}::vector) as similarity
+      FROM ${tableRows}
+      ${whereClause}
+      ${tableTypeFilter}
+      ORDER BY embedding <=> ${JSON.stringify(questionEmbedding)}::vector
+      LIMIT 10
+    `);
+
+    if (!relevantRows.rows || relevantRows.rows.length === 0) {
+      return {
+        answer: "Not available in the provided documents.",
+        values: [],
+        citations: [],
+        confidence: "not_found",
+      };
+    }
+
+    // 4. Get table metadata (including context lines) for top matches
+    const uniqueTableIds = [...new Set(relevantRows.rows.map((r: any) => r.table_id))];
+
+    const tableMetadata = await db
+      .select()
+      .from(tables)
+      .where(inArray(tables.tableId, uniqueTableIds));
+
+    // Map table metadata by tableId
+    const tableMetadataMap = new Map(
+      tableMetadata.map((t) => [t.tableId, t])
+    );
+
+    // 5. Prepare context for LLM
+    const tableContext = relevantRows.rows
+      .slice(0, 5)
+      .map((row: any) => {
+        const meta = tableMetadataMap.get(row.table_id);
+        return `[Table: ${row.table_name || "Unknown"} | Document: ${row.document_name} | Page: ${row.page}]
+Row: ${row.row_label}
+Column/Period: ${row.column_label}
+Value: ${row.value} ${row.unit || ""}
+Context Above: ${meta?.contextAboveLines.slice(0, 2).join("; ") || "N/A"}
+Context Below: ${meta?.contextBelowLines.slice(0, 2).join("; ") || "N/A"}`;
+      })
+      .join("\n\n---\n\n");
+
+    // 6. Generate answer using LLM with strict table-only policy
+    const systemPrompt = `You are a financial Q&A assistant for structured table data.
+
+CRITICAL RULES:
+1. Answer using ONLY the exact values from the provided table data
+2. Do NOT calculate, derive, or extrapolate ANY values
+3. Do NOT perform any arithmetic operations
+4. If the exact value is not in the tables, respond with "Not available in the provided documents."
+5. Include the table name, period/column, and exact value in your answer
+6. Format: "[Metric] for [Period]: [Value] [Unit] (Source: [Table Name], Page X)"
+
+Example response:
+"Debt service coverage ratio for Quarter ended 31 Dec 2025: 1.45 times (Source: RATIOS table, Page 12)"`;
+
+    const userPrompt = `Question: ${question}
+
+Table Data:
+${tableContext}
+
+Provide your answer using the exact values from the tables above.`;
+
+    const llmResponse = await generateChatCompletion(
+      [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      { temperature: 0, maxTokens: 500 }
+    );
+
+    if (llmResponse.toLowerCase().includes("not available")) {
+      return {
+        answer: "Not available in the provided documents.",
+        values: [],
+        citations: [],
+        confidence: "not_found",
+      };
+    }
+
+    // 7. Prepare detailed values array with context lines
+    const values = relevantRows.rows.slice(0, 5).map((row: any) => {
+      const meta = tableMetadataMap.get(row.table_id);
+      return {
+        tableId: row.table_id,
+        tableName: row.table_name,
+        page: row.page,
+        rowLabel: row.row_label,
+        columnLabel: row.column_label,
+        period: row.period,
+        value: row.value,
+        numericValue: row.numeric_value,
+        unit: row.unit,
+        contextAboveLines: meta?.contextAboveLines || [],
+        contextBelowLines: meta?.contextBelowLines || [],
+      };
+    });
+
+    // 8. Extract citations
+    const citations = values.slice(0, 3).map((v) => ({
+      documentName: relevantRows.rows[0].document_name,
+      page: v.page,
+      tableId: v.tableId,
+    }));
+
+    // 9. Determine confidence
+    const topSimilarity = relevantRows.rows[0]?.similarity || 0;
+    const confidence: FinancialAnswer["confidence"] =
+      topSimilarity > 0.75 ? "high" : topSimilarity > 0.5 ? "medium" : "low";
+
+    return {
+      answer: llmResponse,
+      values,
+      citations,
+      confidence,
+    };
+  } catch (error) {
+    console.error("Error in financial Q&A:", error);
+    return {
+      answer: "An error occurred while processing your question.",
+      values: [],
+      citations: [],
+      confidence: "not_found",
+    };
+  }
+}
+
+/**
+ * Identify which table types to search based on question keywords
+ */
+function identifyTableTypes(question: string): string[] {
+  const q = question.toLowerCase();
+  const types: string[] = [];
+
+  if (/ratio|coverage|debt service|icr/i.test(q)) {
+    types.push("RATIOS");
+  }
+
+  if (/ndcf|net distributable cash flow/i.test(q)) {
+    types.push("NDCF");
+  }
+
+  if (/distribution|per unit|dpu/i.test(q)) {
+    types.push("DISTRIBUTION");
+  }
+
+  if (/profit|loss|revenue|income|expense|p&l/i.test(q)) {
+    types.push("P&L");
+  }
+
+  if (/balance sheet|assets|liabilities|equity/i.test(q)) {
+    types.push("BALANCE_SHEET");
+  }
+
+  // If no specific type identified, return empty (search all)
+  return types;
+}
