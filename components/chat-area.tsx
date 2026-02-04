@@ -124,69 +124,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                 The system will provide verbatim citations and table-based answers.
               </p>
 
-              {/* Example Questions */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                {/* Factual Questions (from document chunks) */}
-                <div className="text-left">
-                  <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                    <span className="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
-                    Factual Questions
-                    <span className="text-xs font-normal text-[var(--foreground-muted)]">(from text)</span>
-                  </h3>
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => handleExampleQuestion("Who is the auditor?")}
-                      className="w-full text-left p-3 rounded-lg border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-sm text-foreground"
-                    >
-                      Who is the auditor?
-                    </button>
-                    <button
-                      onClick={() => handleExampleQuestion("What is the company's registered office address?")}
-                      className="w-full text-left p-3 rounded-lg border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-sm text-foreground"
-                    >
-                      What is the company's registered office address?
-                    </button>
-                    <button
-                      onClick={() => handleExampleQuestion("What were the key decisions in the board meeting?")}
-                      className="w-full text-left p-3 rounded-lg border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-sm text-foreground"
-                    >
-                      What were the key decisions in the board meeting?
-                    </button>
-                  </div>
-                </div>
-
-                {/* Financial Questions (from tables) */}
-                <div className="text-left">
-                  <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                    <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                    Financial Questions
-                    <span className="text-xs font-normal text-[var(--foreground-muted)]">(from tables)</span>
-                  </h3>
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => handleExampleQuestion("What are the financial ratios?")}
-                      className="w-full text-left p-3 rounded-lg border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-sm text-foreground"
-                    >
-                      What are the financial ratios?
-                    </button>
-                    <button
-                      onClick={() => handleExampleQuestion("What is the total distribution amount?")}
-                      className="w-full text-left p-3 rounded-lg border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-sm text-foreground"
-                    >
-                      What is the total distribution amount?
-                    </button>
-                    <button
-                      onClick={() => handleExampleQuestion("What is the NDCF for the current period?")}
-                      className="w-full text-left p-3 rounded-lg border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-sm text-foreground"
-                    >
-                      What is the NDCF for the current period?
-                    </button>
-                  </div>
-                </div>
-              </div>
-
               <p className="text-xs text-[var(--foreground-subtle)] mt-6">
-                💡 Click any question above to try it out
+                💡 Click suggested questions in the left sidebar to get started
               </p>
             </div>
           </div>
