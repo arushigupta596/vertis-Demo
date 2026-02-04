@@ -9,8 +9,11 @@ import { extractTablesFromPDF } from "./table-extraction";
 import { generateEmbedding } from "../openrouter";
 
 if (!supabaseAdmin) {
-  throw new Error("Supabase admin client is not initialized");
+  throw new Error("Supabase admin client is not initialized. Please set SUPABASE_SERVICE_ROLE_KEY in .env.local");
 }
+
+// TypeScript non-null assertion since we've checked above
+const client = supabaseAdmin;
 
 export interface IngestionOptions {
   generateEmbeddings?: boolean;
@@ -40,7 +43,7 @@ export async function ingestDocument(
     console.log(`[Ingest] Starting ingestion for ${metadata.fileName}`);
 
     // 1. Check if document already exists
-    const { data: existingDoc } = await supabaseAdmin
+    const { data: existingDoc } = await client
       .from("documents")
       .select("id, display_name")
       .eq("file_name", metadata.fileName)
@@ -57,7 +60,7 @@ export async function ingestDocument(
     }
 
     // 2. Create document record
-    const { data: doc, error: docError } = await supabaseAdmin
+    const { data: doc, error: docError } = await client
       .from("documents")
       .insert({
         file_name: metadata.fileName,
@@ -78,7 +81,7 @@ export async function ingestDocument(
     console.log(`[Ingest] Created document with ID: ${documentId}`);
 
     // Create ingestion log
-    await supabaseAdmin.from("ingestion_logs").insert({
+    await client.from("ingestion_logs").insert({
       document_id: documentId,
       status: "processing",
       message: "Starting ingestion",
@@ -89,7 +92,7 @@ export async function ingestDocument(
     const { text, pageCount, pages } = await extractTextFromPDF(filePath);
 
     // Update page count
-    await supabaseAdmin
+    await client
       .from("documents")
       .update({ page_count: pageCount })
       .eq("id", documentId);
@@ -126,7 +129,7 @@ export async function ingestDocument(
 
       // Insert in batches of 50
       if (chunksToInsert.length >= 50) {
-        const { error } = await supabaseAdmin.from("text_chunks").insert(chunksToInsert);
+        const { error } = await client.from("text_chunks").insert(chunksToInsert);
         if (error) {
           console.error("Failed to insert text chunks:", error.message);
         }
@@ -136,7 +139,7 @@ export async function ingestDocument(
 
     // Insert remaining chunks
     if (chunksToInsert.length > 0) {
-      const { error } = await supabaseAdmin.from("text_chunks").insert(chunksToInsert);
+      const { error } = await client.from("text_chunks").insert(chunksToInsert);
       if (error) {
         console.error("Failed to insert text chunks:", error.message);
       }
@@ -153,7 +156,7 @@ export async function ingestDocument(
 
     for (const table of extractedTables) {
       // Insert table metadata
-      const { data: insertedTable, error: tableError } = await supabaseAdmin
+      const { data: insertedTable, error: tableError } = await client
         .from("tables")
         .insert({
           table_id: table.tableId,
@@ -211,7 +214,7 @@ export async function ingestDocument(
 
       // Insert all rows for this table
       if (rowsToInsert.length > 0) {
-        const { error: rowsError } = await supabaseAdmin
+        const { error: rowsError } = await client
           .from("table_rows")
           .insert(rowsToInsert);
 
@@ -222,7 +225,7 @@ export async function ingestDocument(
     }
 
     // Log success
-    await supabaseAdmin.from("ingestion_logs").insert({
+    await client.from("ingestion_logs").insert({
       document_id: documentId,
       status: "completed",
       message: `Successfully ingested ${chunks.length} chunks and ${extractedTables.length} tables`,
@@ -236,7 +239,7 @@ export async function ingestDocument(
 
     // Log error if we have a documentId
     try {
-      await supabaseAdmin.from("ingestion_logs").insert({
+      await client.from("ingestion_logs").insert({
         document_id: undefined,
         status: "failed",
         message: error instanceof Error ? error.message : "Unknown error",

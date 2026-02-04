@@ -198,9 +198,9 @@ function parseFactualResponse(response: string): {
   answer: string;
   quotedEvidence: string;
 } {
-  // Try to extract structured response
-  const answerMatch = response.match(/Answer:\s*(.+?)(?=Quoted Evidence:|Citation:|$)/s);
-  const quotedMatch = response.match(/Quoted Evidence:\s*"?(.+?)"?(?=Citation:|$)/s);
+  // Try to extract structured response (using [\s\S] instead of s flag for ES2017 compatibility)
+  const answerMatch = response.match(/Answer:\s*([\s\S]+?)(?=Quoted Evidence:|Citation:|$)/);
+  const quotedMatch = response.match(/Quoted Evidence:\s*"?([\s\S]+?)"?(?=Citation:|$)/);
 
   const answer = answerMatch ? answerMatch[1].trim() : response.split("\n")[0].trim();
   const quotedEvidence = quotedMatch ? quotedMatch[1].trim() : "";
