@@ -1,0 +1,98 @@
+[
+  {
+    "document_id": 1,
+    "pdf_path": "/Users/arushigupta/Desktop/EMB/Demos/Vertis/public/pdfs/1.-Financial-Statements.pdf",
+    "total_tables": 1,
+    "matched": 0,
+    "accuracy": 0.0,
+    "avg_confidence": 0.979565,
+    "results": [
+      {
+        "table_id": "doc1_p1_t1",
+        "table_name": "DISTRIBUTION",
+        "page": 1,
+        "status": "mismatch",
+        "confidence": 0.979565,
+        "comparison": {
+          "pdf_shape": [
+            1,
+            2
+          ],
+          "db_row_count": 0,
+          "row_match": false,
+          "extraction_accuracy": 100.0,
+          "method": "lattice",
+          "page": 1
+        }
+      }
+    ]
+  },
+  {
+    "document_id": 6,
+    "pdf_path": "/Users/arushigupta/Desktop/EMB/Demos/Vertis/public/pdfs/709bed4f-f1c7-4920-83fc-e9b8cba4492b.pdf",
+    "total_tables": 9,
+    "matched": 0,
+    "accuracy": 0.0,
+    "avg_confidence": 0.109815,
+    "results": [
+      {
+        "table_id": "doc6_p1_t1",
+        "table_name": "DISTRIBUTION",
+        "page": 1,
+        "status": "mismatch",
+        "confidence": 0.988335,
+        "comparison": {
+          "pdf_shape": [
+            1,
+            2
+          ],
+          "db_row_count": 10,
+          "row_match": false,
+          "extraction_accuracy": 100.0,
+          "method": "lattice",
+          "page": 1
+        }
+      },
+      {
+        "table_id": "doc6_p52_t3",
+        "status": "no_match",
+        "error": "PDF table not found"
+      },
+      {
+        "table_id": "doc6_p54_t4",
+        "status": "no_match",
+        "error": "PDF table not found"
+      },
+      {
+        "table_id": "doc6_p56_t5",
+        "status": "no_match",
+        "error": "PDF table not found"
+      },
+      {
+        "table_id": "doc6_p72_t7",
+        "status": "no_match",
+        "error": "PDF table not found"
+      },
+      {
+        "table_id": "doc6_p72_t9",
+        "status": "no_match",
+        "error": "PDF table not found"
+      },
+      {
+        "table_id": "doc6_p76_t10",
+        "status": "no_match",
+        "error": "PDF table not found"
+      },
+      {
+        "table_id": "doc6_p76_t11",
+        "status": "no_match",
+        "error": "PDF table not found"
+      },
+      {
+        "table_id": "doc6_p76_t12",
+        "status": "no_match",
+        "error": "PDF table not found"
+      }
+    ]
+  }
+]
