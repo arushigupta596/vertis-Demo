@@ -113,11 +113,10 @@ Vercel will auto-detect Next.js. Verify these settings:
 Click **"Environment Variables"** and add these:
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://msjemxedaxqrxahbzthr.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zamVteGVkYXhxcnhhaGJ6dGhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyNTQ4NDQsImV4cCI6MjA1MzgzMDg0NH0.XF8r0yfh-lzGy76dI8qPhsR_RDj1C-ZXEbHzOBPzLuk
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zamVteGVkYXhxcnhhaGJ6dGhyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczODI1NDg0NCwiZXhwIjoyMDUzODMwODQ0fQ.EgCy6bH0o0DbnJJl4cLiRqtxUZPx_EkJqYTBxlGICXI
-OPENROUTER_API_KEY=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
-```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+OPENROUTER_API_KEY
 
 **Important**: Set all environment variables for **Production**, **Preview**, and **Development** environments.
 
