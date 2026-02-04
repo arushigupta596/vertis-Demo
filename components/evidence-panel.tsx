@@ -90,15 +90,20 @@ export function EvidencePanel({ response }: EvidencePanelProps) {
                   key={idx}
                   className="p-3 rounded-lg bg-white border border-[var(--border)]"
                 >
-                  <div className="text-sm font-medium text-foreground mb-1">
-                    {value.rowLabel}
+                  <div className="text-sm font-medium text-foreground mb-2">
+                    {value.rawText}
                   </div>
-                  <div className="text-xs text-[var(--foreground-muted)] mb-2">
-                    {value.columnLabel}
-                  </div>
-                  <div className="text-lg font-semibold text-[var(--primary)]">
-                    {value.value} {value.unit || ""}
-                  </div>
+
+                  {Object.keys(value.cells).length > 0 && (
+                    <div className="mb-2 p-2 bg-[var(--surface)] rounded text-xs">
+                      {Object.entries(value.cells).map(([key, val]) => (
+                        <div key={key} className="flex gap-2">
+                          <span className="font-medium text-[var(--foreground-muted)]">{key}:</span>
+                          <span className="text-foreground">{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="mt-2 pt-2 border-t border-[var(--border-subtle)]">
                     <div className="text-xs text-[var(--foreground-subtle)]">
