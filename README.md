@@ -117,11 +117,100 @@ vertis-doc-chat/
 
 ### Document Ingestion
 
-1. Upload PDFs via admin panel
-2. Text extraction using pdfplumber
-3. Table extraction using Camelot
-4. Embedding generation using OpenAI
-5. Storage in Supabase with pgvector
+The document ingestion pipeline consists of several stages that extract both text chunks and structured tables from PDF documents.
+
+#### 1. Text Chunk Extraction (pdfplumber)
+
+The text extraction process uses **pdfplumber** to extract text content with precise spatial coordinates:
+
+**Methodology:**
+- **Page-by-page extraction**: Each PDF page is processed individually to maintain context
+- **Coordinate-based extraction**: Text is extracted with x, y coordinates (bounding boxes) for precise location tracking
+- **Character-level analysis**: pdfplumber analyzes individual characters, words, and lines with their positions
+- **Layout preservation**: Maintains reading order and spatial relationships between text elements
+
+**Chunking Strategy:**
+- Text is split into manageable chunks for vector search (typically 500-1000 characters)
+- Chunks maintain semantic boundaries (paragraphs, sections)
+- Each chunk stores:
+  - `content`: The actual text content
+  - `page_number`: Source page in the PDF
+  - `x`, `y`: Top-left coordinates of the chunk
+  - `width`, `height`: Dimensions of the text bounding box
+  - `embedding`: OpenAI embedding vector (1536 dimensions)
+
+**Implementation** (`scripts/extract_text.py`):
+```python
+# Extract text with coordinates from each page
+for page in pdf.pages:
+    text = page.extract_text()
+    # Get bounding box coordinates
+    bbox = page.bbox  # (x0, y0, x1, y1)
+    # Store chunk with spatial metadata
+```
+
+#### 2. Table Extraction (Camelot)
+
+The table extraction process uses **Camelot** with a dual-method approach for maximum accuracy:
+
+**Methodology:**
+- **Primary Method - Lattice**: Detects tables with visible borders/lines
+  - Analyzes ruling lines and cell boundaries
+  - Works best for well-formatted tables with clear gridlines
+  - Higher accuracy for structured financial statements
+
+- **Fallback Method - Stream**: Detects borderless tables using whitespace
+  - Analyzes text positioning and alignment
+  - Captures tables without visible borders
+  - Useful for text-based tabular data
+
+**Context Line Extraction:**
+- **Pre-table context**: Extracts 2-3 lines before each table
+  - Captures table titles, headers, and contextual information
+  - Uses bounding box coordinates to identify proximity
+  - Stores as `context_before` for enhanced table understanding
+
+- **Post-table context**: Extracts lines immediately after tables
+  - Captures footnotes, explanatory notes, and continuations
+  - Stored as `context_after` metadata
+
+**Table Processing Pipeline:**
+```python
+# Try lattice method first (for bordered tables)
+tables = camelot.read_pdf(pdf_path, pages='all', flavor='lattice')
+
+if len(tables) == 0:
+    # Fallback to stream method (for borderless tables)
+    tables = camelot.read_pdf(pdf_path, pages='all', flavor='stream')
+
+# For each detected table:
+# 1. Extract table data as 2D array
+# 2. Identify header rows
+# 3. Extract context lines using bounding boxes
+# 4. Generate embeddings for each row
+# 5. Store in table_rows with JSONB cells
+```
+
+**Row Storage Structure:**
+Each table row is stored with:
+- `table_id`: Reference to parent table
+- `row_index`: Position in the table
+- `cells`: JSONB array of cell values `["cell1", "cell2", ...]`
+- `raw_text`: Concatenated text for embedding
+- `embedding`: OpenAI embedding vector
+- `context_before`, `context_after`: Surrounding text for better understanding
+
+#### 3. Embedding Generation
+
+- **Model**: OpenAI `text-embedding-ada-002` (1536 dimensions)
+- **Applied to**: Both text chunks and table rows
+- **Purpose**: Enable semantic similarity search using cosine distance
+
+#### 4. Vector Storage
+
+- **Database**: Supabase PostgreSQL with pgvector extension
+- **Similarity Search**: Cosine similarity for finding relevant chunks/rows
+- **Indexing**: Vector indexes for efficient search at scale
 
 ### Question Answering
 
