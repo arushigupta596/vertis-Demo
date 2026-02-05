@@ -217,22 +217,10 @@ export function DocumentSidebar({
                   What is the distribution amount?
                 </button>
                 <button
-                  onClick={() => onQuestionClick?.("What is the NDCF for the current period?")}
-                  className="w-full text-left px-2 py-1.5 rounded text-xs border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-foreground"
-                >
-                  NDCF for current period?
-                </button>
-                <button
                   onClick={() => onQuestionClick?.("What is the debt service coverage ratio?")}
                   className="w-full text-left px-2 py-1.5 rounded text-xs border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-foreground"
                 >
                   Debt service coverage ratio?
-                </button>
-                <button
-                  onClick={() => onQuestionClick?.("Show me the profit and loss statement")}
-                  className="w-full text-left px-2 py-1.5 rounded text-xs border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-foreground"
-                >
-                  Profit and loss statement?
                 </button>
               </div>
             </div>
