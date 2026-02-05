@@ -29,6 +29,7 @@ export async function extractTextFromPDF(pdfPath: string): Promise<{
   const results = await PythonShell.run(scriptPath, {
     args: [pdfPath],
     mode: "json",
+    pythonPath: path.join(process.cwd(), "venv", "bin", "python3"),
   });
 
   const data = results[0] as {

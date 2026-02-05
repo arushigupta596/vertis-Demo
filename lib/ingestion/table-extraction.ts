@@ -46,6 +46,7 @@ export async function extractTablesFromPDF(
     const results = await PythonShell.run(scriptPath, {
       args: [pdfPath, contextLinesCount.toString()],
       mode: "json",
+      pythonPath: path.join(process.cwd(), "venv", "bin", "python3"),
     });
 
     if (!results || results.length === 0) {
