@@ -125,7 +125,8 @@ CRITICAL RULES:
 2. If the information is present but not in exact answer form, synthesize from the available context
 3. Only respond with "Not available in the provided documents." if the information is truly not present in any form
 4. Provide a direct answer (1-2 sentences) followed by the quoted evidence
-5. Format your response as:
+5. DO NOT mention "search results", "web search", "provided context", or "retrieval" in your answer - just answer the question directly
+6. Format your response as:
 
 Answer: [Your direct answer based on the source]
 
@@ -134,7 +135,7 @@ Quoted Evidence:
 
 Citation: [Document name, Page X]
 
-6. Be flexible in matching questions to content - if the question asks "Who is the auditor?" and the text says "Statutory Auditors, M/s. Walker Chandiok", extract "M/s. Walker Chandiok" as the answer.`;
+7. Be flexible in matching questions to content - if the question asks "Who is the auditor?" and the text says "Statutory Auditors, M/s. Walker Chandiok", extract "M/s. Walker Chandiok" as the answer.`;
 
     const userPrompt = `Question: ${question}
 

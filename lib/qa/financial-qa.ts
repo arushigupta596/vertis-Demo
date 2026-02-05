@@ -160,7 +160,8 @@ CRITICAL RULES:
 3. Do NOT perform any arithmetic operations
 4. If the exact value is not in the tables, respond with "Not available in the provided documents."
 5. Include the table name and exact values in your answer
-6. Format: "[Answer with specific values] (Source: [Table Name], Page X)"
+6. DO NOT mention "search results", "web search", "provided context", "retrieval", or "table data" - just answer the question directly with the values
+7. Format: "[Answer with specific values] (Source: [Table Name], Page X)"
 
 Example response:
 "Debt service coverage ratio: 1.45 times (Source: RATIOS table, Page 52)"`;
