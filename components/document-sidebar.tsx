@@ -165,34 +165,34 @@ export function DocumentSidebar({
               </div>
               <div className="space-y-1">
                 <button
-                  onClick={() => onQuestionClick?.("Who is the auditor?")}
+                  onClick={() => onQuestionClick?.("Who are the statutory auditors?")}
                   className="w-full text-left px-2 py-1.5 rounded text-xs border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-foreground"
                 >
-                  Who is the auditor?
+                  Who are the statutory auditors?
                 </button>
                 <button
-                  onClick={() => onQuestionClick?.("What is the company's registered office address?")}
+                  onClick={() => onQuestionClick?.("What was approved in the board meeting?")}
                   className="w-full text-left px-2 py-1.5 rounded text-xs border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-foreground"
                 >
-                  What is the registered office address?
+                  What was approved in the board meeting?
                 </button>
                 <button
-                  onClick={() => onQuestionClick?.("What were the key decisions in the board meeting?")}
+                  onClick={() => onQuestionClick?.("What is the financial year end date?")}
                   className="w-full text-left px-2 py-1.5 rounded text-xs border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-foreground"
                 >
-                  Key board meeting decisions?
+                  What is the financial year end date?
                 </button>
                 <button
-                  onClick={() => onQuestionClick?.("Who are the directors of the company?")}
+                  onClick={() => onQuestionClick?.("What is the name of the investment manager?")}
                   className="w-full text-left px-2 py-1.5 rounded text-xs border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-foreground"
                 >
-                  Who are the directors?
+                  What is the investment manager?
                 </button>
                 <button
-                  onClick={() => onQuestionClick?.("What are the risk factors mentioned?")}
+                  onClick={() => onQuestionClick?.("What stock exchanges is the trust listed on?")}
                   className="w-full text-left px-2 py-1.5 rounded text-xs border border-[var(--border)] hover:bg-[var(--surface)] hover:border-[var(--primary)] transition-all text-foreground"
                 >
-                  What are the risk factors?
+                  What stock exchanges is it listed on?
                 </button>
               </div>
             </div>
