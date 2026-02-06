@@ -41,9 +41,9 @@ export async function extractTablesFromPDF(
   try {
     const scriptPath = path.join(process.cwd(), "scripts", "extract_tables_with_ocr_fallback.py");
 
-    // Run Python script
+    // Run Python script with document ID
     const results = await PythonShell.run(scriptPath, {
-      args: [pdfPath, contextLinesCount.toString()],
+      args: [pdfPath, contextLinesCount.toString(), documentId.toString()],
       mode: "json",
       pythonPath: path.join(process.cwd(), "venv", "bin", "python3"),
     });

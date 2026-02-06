@@ -11,7 +11,7 @@ from ocr_tables import extract_tables_with_ocr
 
 
 def extract_tables_hybrid(pdf_path: str, context_lines_count: int = 20,
-                          min_tables_per_page: int = 1) -> dict:
+                          min_tables_per_page: int = 1, document_id: int = 0) -> dict:
     """
     Extract tables using Camelot first, then OCR for pages with insufficient tables
 
@@ -19,6 +19,7 @@ def extract_tables_hybrid(pdf_path: str, context_lines_count: int = 20,
         pdf_path: Path to PDF file
         context_lines_count: Number of context lines (default 20 for OCR)
         min_tables_per_page: Minimum tables expected per page
+        document_id: Document ID to include in table IDs for uniqueness
 
     Returns:
         Combined results from both methods
@@ -63,7 +64,7 @@ def extract_tables_hybrid(pdf_path: str, context_lines_count: int = 20,
     if pages_for_ocr:
         print(f"Step 2: Applying OCR to {len(pages_for_ocr)} pages: {pages_for_ocr}", file=sys.stderr)
 
-        ocr_result = extract_tables_with_ocr(pdf_path, pages_for_ocr, context_lines_count)
+        ocr_result = extract_tables_with_ocr(pdf_path, pages_for_ocr, context_lines_count, document_id)
 
         if ocr_result['success']:
             ocr_tables = ocr_result.get('tables', [])
@@ -90,6 +91,7 @@ if __name__ == '__main__':
 
     pdf_path = sys.argv[1]
     context_lines = int(sys.argv[2]) if len(sys.argv) > 2 else 20
+    document_id = int(sys.argv[3]) if len(sys.argv) > 3 else 0
 
-    result = extract_tables_hybrid(pdf_path, context_lines)
+    result = extract_tables_hybrid(pdf_path, context_lines, 1, document_id)
     print(json.dumps(result, ensure_ascii=False))

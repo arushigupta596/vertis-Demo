@@ -8,11 +8,7 @@ import { extractTextFromPDF, chunkText } from "./text-extraction";
 import { extractTablesFromPDF } from "./table-extraction";
 import { generateEmbedding } from "../openrouter";
 
-if (!supabaseAdmin) {
-  throw new Error("Supabase admin client is not initialized. Please set SUPABASE_SERVICE_ROLE_KEY in .env.local");
-}
-
-// TypeScript non-null assertion since we've checked above
+// supabaseAdmin is now a lazy-loaded Proxy, no need for null check
 const client = supabaseAdmin;
 
 export interface IngestionOptions {

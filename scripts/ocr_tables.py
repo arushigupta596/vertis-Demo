@@ -183,7 +183,8 @@ def detect_table_regions_with_ocr(pdf_path: str, page_num: int, dpi: int = 300) 
 
 def extract_tables_with_ocr(pdf_path: str,
                             pages_to_process: Optional[List[int]] = None,
-                            context_lines_count: int = 20) -> Dict[str, Any]:
+                            context_lines_count: int = 20,
+                            document_id: int = 0) -> Dict[str, Any]:
     """
     Extract tables using OCR for pages where Camelot failed
 
@@ -191,6 +192,7 @@ def extract_tables_with_ocr(pdf_path: str,
         pdf_path: Path to PDF file
         pages_to_process: List of page numbers to process (1-indexed), or None for all
         context_lines_count: Number of context lines to extract above/below
+        document_id: Document ID to include in table IDs for uniqueness
 
     Returns:
         Dictionary with extracted tables and metadata
@@ -234,8 +236,8 @@ def extract_tables_with_ocr(pdf_path: str,
                 # Classify table (simplified)
                 table_name = classify_ocr_table(region['ocr_text'], context_above)
 
-                # Create unique table ID
-                table_id = f"doc_ocr_p{page_num}_t{idx}"
+                # Create unique table ID with document ID
+                table_id = f"doc{document_id}_ocr_p{page_num}_t{idx}"
 
                 result['tables'].append({
                     'page': page_num,
@@ -296,5 +298,8 @@ if __name__ == '__main__':
     # Context lines count
     context_lines = int(sys.argv[3]) if len(sys.argv) > 3 else 20
 
-    result = extract_tables_with_ocr(pdf_path, pages_to_process, context_lines)
+    # Document ID
+    document_id = int(sys.argv[4]) if len(sys.argv) > 4 else 0
+
+    result = extract_tables_with_ocr(pdf_path, pages_to_process, context_lines, document_id)
     print(json.dumps(result, ensure_ascii=False))
