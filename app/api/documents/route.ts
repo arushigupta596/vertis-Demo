@@ -5,10 +5,6 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
-    if (!supabaseAdmin) {
-      throw new Error("Supabase admin client not initialized");
-    }
-
     const { data: docs, error } = await supabaseAdmin
       .from("documents")
       .select("*")

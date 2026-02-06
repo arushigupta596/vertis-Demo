@@ -9,10 +9,6 @@ export const runtime = "nodejs";
  */
 export async function GET(req: NextRequest) {
   try {
-    if (!supabaseAdmin) {
-      throw new Error("Supabase admin client not initialized");
-    }
-
     const { searchParams } = new URL(req.url);
     const documentId = searchParams.get("documentId");
     const page = searchParams.get("page");
