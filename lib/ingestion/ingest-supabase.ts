@@ -147,9 +147,9 @@ export async function ingestDocument(
 
     console.log(`[Ingest] Inserted ${chunks.length} text chunks`);
 
-    // 6. Extract tables using pdfplumber + Camelot
-    console.log(`[Ingest] Extracting tables using pdfplumber + Camelot...`);
-    const contextLinesCount = opts.contextLines.above;
+    // 6. Extract tables using hybrid approach (Camelot + OCR fallback)
+    console.log(`[Ingest] Extracting tables using Camelot + OCR fallback...`);
+    const contextLinesCount = 20; // Use 20 lines of context for better understanding
     const extractedTables = await extractTablesFromPDF(filePath, documentId, contextLinesCount);
 
     console.log(`[Ingest] Found ${extractedTables.length} tables`);

@@ -13,7 +13,8 @@ export interface ExtractedTable {
   contextAboveLines: string[];
   contextBelowLines: string[];
   confidence: number;
-  extractionMethod?: "lattice" | "stream";
+  extractionMethod?: "lattice" | "stream" | "ocr";
+  ocrText?: string; // For OCR-extracted tables
 }
 
 export interface NormalizedRow {
@@ -27,20 +28,18 @@ export interface NormalizedRow {
 }
 
 /**
- * Extract tables from PDF using pdfplumber + Camelot (lattice + stream fallback)
- *
- * This replaces the heuristic approach with proper table extraction:
- * - Primary: Camelot lattice method (for tables with borders)
- * - Fallback: Camelot stream method (for tables without borders)
- * - Context extraction: pdfplumber with text coordinates
+ * Extract tables from PDF using hybrid approach:
+ * - Primary: Camelot (lattice + stream methods)
+ * - Fallback: OCR-based extraction for pages with no/few tables
+ * - Context extraction: 20 lines above and below each table
  */
 export async function extractTablesFromPDF(
   pdfPath: string,
   documentId: number,
-  contextLinesCount: number = 3
+  contextLinesCount: number = 20
 ): Promise<ExtractedTable[]> {
   try {
-    const scriptPath = path.join(process.cwd(), "scripts", "extract_tables.py");
+    const scriptPath = path.join(process.cwd(), "scripts", "extract_tables_with_ocr_fallback.py");
 
     // Run Python script
     const results = await PythonShell.run(scriptPath, {
@@ -58,18 +57,25 @@ export async function extractTablesFromPDF(
       success: boolean;
       tables: Array<{
         page: number;
+        table_id?: string;
         table_index_on_page: number;
         table_name: string;
-        unit: string | null;
-        periods: string[];
-        raw_table_grid: string[][];
+        unit?: string | null;
+        periods?: string[];
+        raw_table_grid?: string[][];
+        ocr_text?: string;
         context_above_lines: string[];
         context_below_lines: string[];
         confidence: number;
-        extraction_method: "lattice" | "stream";
+        extraction_method: "lattice" | "stream" | "ocr";
       }>;
       page_count: number;
       errors: string[];
+      extraction_stats?: {
+        camelot_tables: number;
+        ocr_tables: number;
+        pages_with_ocr: number[];
+      };
     };
 
     if (!result.success) {
@@ -79,28 +85,39 @@ export async function extractTablesFromPDF(
 
     console.log(`[Table Extraction] Found ${result.tables.length} tables across ${result.page_count} pages`);
 
+    if (result.extraction_stats) {
+      console.log(`[Table Extraction] Camelot: ${result.extraction_stats.camelot_tables}, OCR: ${result.extraction_stats.ocr_tables}`);
+      if (result.extraction_stats.pages_with_ocr.length > 0) {
+        console.log(`[Table Extraction] OCR applied to pages: ${result.extraction_stats.pages_with_ocr.join(', ')}`);
+      }
+    }
+
     if (result.errors && result.errors.length > 0) {
       console.warn("[Table Extraction] Warnings:", result.errors);
     }
 
     // Convert Python results to TypeScript format
     const tables: ExtractedTable[] = result.tables.map((table, idx) => {
-      const tableId = `doc${documentId}_p${table.page}_t${table.table_index_on_page}`;
-      const normalizedRows = normalizeTableRows(table.raw_table_grid);
+      const tableId = table.table_id || `doc${documentId}_p${table.page}_t${table.table_index_on_page}`;
+
+      // For OCR tables, create a simple grid from the OCR text
+      const rawTableGrid = table.raw_table_grid || (table.ocr_text ? [[table.ocr_text]] : [[]]);
+      const normalizedRows = normalizeTableRows(rawTableGrid);
 
       return {
         tableId,
         page: table.page,
         tableIndexOnPage: table.table_index_on_page,
         tableName: table.table_name,
-        unit: table.unit,
-        periods: table.periods,
-        rawTableGrid: table.raw_table_grid,
+        unit: table.unit || null,
+        periods: table.periods || [],
+        rawTableGrid,
         normalizedRows,
         contextAboveLines: table.context_above_lines,
         contextBelowLines: table.context_below_lines,
         confidence: table.confidence,
         extractionMethod: table.extraction_method,
+        ocrText: table.ocr_text,
       };
     });
 
