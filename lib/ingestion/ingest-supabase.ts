@@ -7,9 +7,10 @@ import { supabaseAdmin } from "../supabase";
 import { extractTextFromPDF, chunkText } from "./text-extraction";
 import { extractTablesFromPDF } from "./table-extraction";
 import { generateEmbedding } from "../openrouter";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-// supabaseAdmin is now a lazy-loaded Proxy, no need for null check
-const client = supabaseAdmin;
+// supabaseAdmin is now a lazy-loaded Proxy, cast for TypeScript
+const client = supabaseAdmin as unknown as SupabaseClient<any>;
 
 export interface IngestionOptions {
   generateEmbeddings?: boolean;
@@ -46,10 +47,11 @@ export async function ingestDocument(
       .single();
 
     if (existingDoc) {
-      console.log(`[Ingest] ⚠️  Document already exists: ${existingDoc.display_name} (ID: ${existingDoc.id})`);
+      const typedDoc = existingDoc as { id: number; display_name: string };
+      console.log(`[Ingest] ⚠️  Document already exists: ${typedDoc.display_name} (ID: ${typedDoc.id})`);
       console.log(`[Ingest] Skipping duplicate ingestion`);
       return {
-        documentId: existingDoc.id,
+        documentId: typedDoc.id,
         success: true,
         error: "Document already ingested (skipped duplicate)",
       };
