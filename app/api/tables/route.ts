@@ -3,6 +3,20 @@ import { supabaseAdmin } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 
+type TableRow = {
+  id: number;
+  table_id: string;
+  document_id: number;
+  page: number;
+  table_index: number;
+  context_above_lines: string[];
+  context_below_lines: string[];
+  table_name: string | null;
+  table_type: string | null;
+  confidence: number;
+  created_at: string;
+};
+
 /**
  * GET /api/tables?documentId=X&page=Y
  * Returns tables for a specific document and optionally a specific page
@@ -29,7 +43,7 @@ export async function GET(req: NextRequest) {
       query = query.eq("page", parseInt(page));
     }
 
-    const { data: result, error } = await query;
+    const { data: result, error } = await query.returns<TableRow[]>();
 
     if (error) {
       throw new Error(`Failed to fetch tables: ${error.message}`);

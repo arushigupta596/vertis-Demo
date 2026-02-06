@@ -3,12 +3,25 @@ import { supabaseAdmin } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 
+type DocumentRow = {
+  id: number;
+  file_name: string;
+  display_name: string;
+  date: string;
+  tags: string[];
+  category: string;
+  file_path: string;
+  uploaded_at: string;
+  page_count: number;
+};
+
 export async function GET(req: NextRequest) {
   try {
     const { data: docs, error } = await supabaseAdmin
       .from("documents")
       .select("*")
-      .order("date", { ascending: false });
+      .order("date", { ascending: false })
+      .returns<DocumentRow[]>();
 
     if (error) {
       throw new Error(`Failed to fetch documents: ${error.message}`);
