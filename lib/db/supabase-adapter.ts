@@ -7,11 +7,7 @@
 import { supabaseAdmin } from "../supabase";
 import type { documents, textChunks, tables, tableRows, chatMessages, ingestionLogs } from "./schema";
 
-if (!supabaseAdmin) {
-  throw new Error("Supabase admin client is not initialized. Please set SUPABASE_SERVICE_ROLE_KEY in .env.local");
-}
-
-// TypeScript non-null assertion since we've checked above
+// Use supabaseAdmin directly (it's a lazy-loading Proxy)
 const client = supabaseAdmin;
 
 // Helper to convert Drizzle insert objects to Supabase format
@@ -21,6 +17,83 @@ type InsertTable = typeof tables.$inferInsert;
 type InsertTableRow = typeof tableRows.$inferInsert;
 type InsertChatMessage = typeof chatMessages.$inferInsert;
 type InsertIngestionLog = typeof ingestionLogs.$inferInsert;
+
+// Database row types
+type DocumentRow = {
+  id: number;
+  file_name: string;
+  display_name: string;
+  date: string;
+  tags: string[];
+  category: string;
+  file_path: string;
+  page_count: number;
+  uploaded_at: string;
+};
+
+type TextChunkRow = {
+  id: number;
+  document_id: number;
+  page: number;
+  chunk_index: number;
+  text: string;
+  start_char: number;
+  end_char: number;
+  embedding: string | null;
+  created_at: string;
+};
+
+type TableRow = {
+  id: number;
+  table_id: string;
+  document_id: number;
+  document_name: string | null;
+  page: number;
+  table_index_on_page: number;
+  context_above_lines: string[];
+  context_below_lines: string[];
+  table_name: string | null;
+  confidence: number;
+  created_at: string;
+};
+
+type TableRowRow = {
+  id: number;
+  table_id: string;
+  document_id: number;
+  document_name: string | null;
+  page: number;
+  table_name: string | null;
+  row_label: string;
+  column_label: string;
+  period: string | null;
+  value: string;
+  numeric_value: number | null;
+  unit: string | null;
+  row_index: number;
+  column_index: number;
+  embedding: string | null;
+  created_at: string;
+};
+
+type ChatMessageRow = {
+  id: number;
+  session_id: string;
+  role: string;
+  content: string;
+  metadata: any;
+  created_at: string;
+};
+
+type IngestionLogRow = {
+  id: number;
+  document_id: number;
+  status: string;
+  message: string;
+  chunks_extracted: number | null;
+  tables_extracted: number | null;
+  created_at: string;
+};
 
 export const db = {
   // Documents
@@ -37,14 +110,18 @@ export const db = {
         page_count: data.pageCount,
       })
       .select()
-      .single();
+      .single()
+      .returns<DocumentRow>();
 
     if (error) throw new Error(`Failed to insert document: ${error.message}`);
     return result;
   },
 
   async getDocuments() {
-    const { data, error } = await client.from("documents").select("*");
+    const { data, error } = await client
+      .from("documents")
+      .select("*")
+      .returns<DocumentRow[]>();
     if (error) throw new Error(`Failed to get documents: ${error.message}`);
     return data;
   },
@@ -64,7 +141,8 @@ export const db = {
     const { data, error } = await client
       .from("text_chunks")
       .insert(formattedChunks)
-      .select();
+      .select()
+      .returns<TextChunkRow[]>();
 
     if (error) throw new Error(`Failed to insert text chunks: ${error.message}`);
     return data;
@@ -86,7 +164,8 @@ export const db = {
         confidence: tableData.confidence,
       })
       .select()
-      .single();
+      .single()
+      .returns<TableRow>();
 
     if (error) throw new Error(`Failed to insert table: ${error.message}`);
     return data;
@@ -114,7 +193,8 @@ export const db = {
     const { data, error } = await client
       .from("table_rows")
       .insert(formattedRows)
-      .select();
+      .select()
+      .returns<TableRowRow[]>();
 
     if (error) throw new Error(`Failed to insert table rows: ${error.message}`);
     return data;
@@ -131,7 +211,8 @@ export const db = {
         metadata: message.metadata,
       })
       .select()
-      .single();
+      .single()
+      .returns<ChatMessageRow>();
 
     if (error) throw new Error(`Failed to insert chat message: ${error.message}`);
     return data;
@@ -142,7 +223,8 @@ export const db = {
       .from("chat_messages")
       .select("*")
       .eq("session_id", sessionId)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: true })
+      .returns<ChatMessageRow[]>();
 
     if (error) throw new Error(`Failed to get chat messages: ${error.message}`);
     return data;
@@ -160,7 +242,8 @@ export const db = {
         tables_extracted: log.tablesExtracted,
       })
       .select()
-      .single();
+      .single()
+      .returns<IngestionLogRow>();
 
     if (error) throw new Error(`Failed to insert ingestion log: ${error.message}`);
     return data;
@@ -173,14 +256,15 @@ export const db = {
     const { data, error } = await client.rpc("match_text_chunks", {
       query_embedding: embeddingStr,
       match_count: limit,
-    });
+    }).returns<TextChunkRow[]>();
 
     if (error) {
       // If RPC doesn't exist, fall back to regular query
       const { data: fallbackData, error: fallbackError } = await client
         .from("text_chunks")
         .select("*")
-        .limit(limit);
+        .limit(limit)
+        .returns<TextChunkRow[]>();
 
       if (fallbackError)
         throw new Error(`Failed to search text chunks: ${fallbackError.message}`);
@@ -196,14 +280,15 @@ export const db = {
     const { data, error } = await client.rpc("match_table_rows", {
       query_embedding: embeddingStr,
       match_count: limit,
-    });
+    }).returns<TableRowRow[]>();
 
     if (error) {
       // If RPC doesn't exist, fall back to regular query
       const { data: fallbackData, error: fallbackError } = await client
         .from("table_rows")
         .select("*")
-        .limit(limit);
+        .limit(limit)
+        .returns<TableRowRow[]>();
 
       if (fallbackError)
         throw new Error(`Failed to search table rows: ${fallbackError.message}`);
