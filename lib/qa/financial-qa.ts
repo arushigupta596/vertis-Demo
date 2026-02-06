@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "../supabase";
 import { generateEmbedding, generateChatCompletion } from "../openrouter";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface FinancialAnswer {
   answer: string;
@@ -25,14 +26,12 @@ export async function answerFinancialQuestion(
   documentIds?: number[]
 ): Promise<FinancialAnswer> {
   try {
-    if (!supabaseAdmin) {
-      throw new Error("Supabase admin client not initialized");
-    }
+    const client = supabaseAdmin as unknown as SupabaseClient<any>;
 
     const targetTableTypes = identifyTableTypes(question);
     const questionEmbedding = await generateEmbedding(question);
 
-    let rowQuery = supabaseAdmin
+    let rowQuery = client
       .from("table_rows")
       .select("id, table_id, row_index, cells, raw_text, embedding")
       .limit(100);
@@ -89,7 +88,7 @@ export async function answerFinancialQuestion(
 
     const uniqueTableIds = [...new Set(rowsWithSimilarity.map((r) => r.table_id))];
 
-    const { data: tableMetadata } = await supabaseAdmin
+    const { data: tableMetadata } = await client
       .from("tables")
       .select("table_id, document_id, page, table_name, context_above_lines, context_below_lines")
       .in("table_id", uniqueTableIds);
@@ -128,7 +127,7 @@ export async function answerFinancialQuestion(
       ),
     ];
 
-    const { data: documents } = await supabaseAdmin
+    const { data: documents } = await client
       .from("documents")
       .select("id, display_name")
       .in("id", documentIdsToFetch as number[]);

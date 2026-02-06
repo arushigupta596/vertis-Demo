@@ -1,5 +1,15 @@
 import { supabaseAdmin } from "../supabase";
 import { generateEmbedding, generateChatCompletion } from "../openrouter";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+type TextChunk = {
+  id: number;
+  document_id: number;
+  page: number;
+  chunk_index: number;
+  text: string;
+  embedding: string | null;
+};
 
 export interface FactualAnswer {
   answer: string;
@@ -20,9 +30,7 @@ export async function answerFactualQuestion(
   documentIds?: number[]
 ): Promise<FactualAnswer> {
   try {
-    if (!supabaseAdmin) {
-      throw new Error("Supabase admin client not initialized");
-    }
+    const client = supabaseAdmin as unknown as SupabaseClient<any>;
 
     // 1. Generate embedding for question
     const questionEmbedding = await generateEmbedding(question);
@@ -32,7 +40,7 @@ export async function answerFactualQuestion(
 
     // Use Supabase RPC to call a custom function for vector search
     // First, let's use a direct query approach
-    let query = supabaseAdmin
+    let query = client
       .from("text_chunks")
       .select(`
         id,
@@ -49,12 +57,13 @@ export async function answerFactualQuestion(
     }
 
     const { data: chunks, error: chunksError } = await query;
+    const typedChunks = chunks as TextChunk[] | null;
 
     if (chunksError) {
       throw new Error(`Failed to fetch chunks: ${chunksError.message}`);
     }
 
-    if (!chunks || chunks.length === 0) {
+    if (!typedChunks || typedChunks.length === 0) {
       return {
         answer: "Not available in the provided documents.",
         quotedEvidence: "",
@@ -64,7 +73,7 @@ export async function answerFactualQuestion(
     }
 
     // Calculate cosine similarity in JavaScript (since we can't use SQL with Supabase client)
-    const chunksWithSimilarity = chunks
+    const chunksWithSimilarity = typedChunks
       .map((chunk) => {
         const chunkEmbedding = chunk.embedding ? JSON.parse(chunk.embedding) : null;
         if (!chunkEmbedding) return null;
