@@ -110,20 +110,18 @@ export const db = {
         page_count: data.pageCount,
       })
       .select()
-      .single()
-      .returns<DocumentRow>();
+      .single();
 
     if (error) throw new Error(`Failed to insert document: ${error.message}`);
-    return result;
+    return result as DocumentRow;
   },
 
   async getDocuments() {
     const { data, error } = await client
       .from("documents")
-      .select("*")
-      .returns<DocumentRow[]>();
+      .select("*");
     if (error) throw new Error(`Failed to get documents: ${error.message}`);
-    return data;
+    return data as DocumentRow[];
   },
 
   // Text Chunks
@@ -141,11 +139,10 @@ export const db = {
     const { data, error } = await client
       .from("text_chunks")
       .insert(formattedChunks)
-      .select()
-      .returns<TextChunkRow[]>();
+      .select();
 
     if (error) throw new Error(`Failed to insert text chunks: ${error.message}`);
-    return data;
+    return data as TextChunkRow[];
   },
 
   // Tables
@@ -164,11 +161,10 @@ export const db = {
         confidence: tableData.confidence,
       })
       .select()
-      .single()
-      .returns<TableRow>();
+      .single();
 
     if (error) throw new Error(`Failed to insert table: ${error.message}`);
-    return data;
+    return data as TableRow;
   },
 
   // Table Rows
@@ -193,11 +189,10 @@ export const db = {
     const { data, error } = await client
       .from("table_rows")
       .insert(formattedRows)
-      .select()
-      .returns<TableRowRow[]>();
+      .select();
 
     if (error) throw new Error(`Failed to insert table rows: ${error.message}`);
-    return data;
+    return data as TableRowRow[];
   },
 
   // Chat Messages
@@ -211,11 +206,10 @@ export const db = {
         metadata: message.metadata,
       })
       .select()
-      .single()
-      .returns<ChatMessageRow>();
+      .single();
 
     if (error) throw new Error(`Failed to insert chat message: ${error.message}`);
-    return data;
+    return data as ChatMessageRow;
   },
 
   async getChatMessages(sessionId: string) {
@@ -223,11 +217,10 @@ export const db = {
       .from("chat_messages")
       .select("*")
       .eq("session_id", sessionId)
-      .order("created_at", { ascending: true })
-      .returns<ChatMessageRow[]>();
+      .order("created_at", { ascending: true });
 
     if (error) throw new Error(`Failed to get chat messages: ${error.message}`);
-    return data;
+    return data as ChatMessageRow[];
   },
 
   // Ingestion Logs
@@ -242,11 +235,10 @@ export const db = {
         tables_extracted: log.tablesExtracted,
       })
       .select()
-      .single()
-      .returns<IngestionLogRow>();
+      .single();
 
     if (error) throw new Error(`Failed to insert ingestion log: ${error.message}`);
-    return data;
+    return data as IngestionLogRow;
   },
 
   // Vector Search
@@ -256,22 +248,21 @@ export const db = {
     const { data, error } = await client.rpc("match_text_chunks", {
       query_embedding: embeddingStr,
       match_count: limit,
-    }).returns<TextChunkRow[]>();
+    });
 
     if (error) {
       // If RPC doesn't exist, fall back to regular query
       const { data: fallbackData, error: fallbackError } = await client
         .from("text_chunks")
         .select("*")
-        .limit(limit)
-        .returns<TextChunkRow[]>();
+        .limit(limit);
 
       if (fallbackError)
         throw new Error(`Failed to search text chunks: ${fallbackError.message}`);
-      return fallbackData;
+      return fallbackData as TextChunkRow[];
     }
 
-    return data;
+    return data as TextChunkRow[];
   },
 
   async searchTableRows(embedding: number[], limit: number = 5) {
@@ -280,21 +271,20 @@ export const db = {
     const { data, error } = await client.rpc("match_table_rows", {
       query_embedding: embeddingStr,
       match_count: limit,
-    }).returns<TableRowRow[]>();
+    });
 
     if (error) {
       // If RPC doesn't exist, fall back to regular query
       const { data: fallbackData, error: fallbackError } = await client
         .from("table_rows")
         .select("*")
-        .limit(limit)
-        .returns<TableRowRow[]>();
+        .limit(limit);
 
       if (fallbackError)
         throw new Error(`Failed to search table rows: ${fallbackError.message}`);
-      return fallbackData;
+      return fallbackData as TableRowRow[];
     }
 
-    return data;
+    return data as TableRowRow[];
   },
 };

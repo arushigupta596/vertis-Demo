@@ -20,15 +20,16 @@ export async function GET(req: NextRequest) {
     const { data: docs, error } = await supabaseAdmin
       .from("documents")
       .select("*")
-      .order("date", { ascending: false })
-      .returns<DocumentRow[]>();
+      .order("date", { ascending: false });
 
     if (error) {
       throw new Error(`Failed to fetch documents: ${error.message}`);
     }
 
+    const typedDocs = docs as DocumentRow[];
+
     // Convert snake_case to camelCase for frontend
-    const formattedDocs = docs?.map(d => ({
+    const formattedDocs = typedDocs?.map(d => ({
       id: d.id,
       fileName: d.file_name,
       displayName: d.display_name,

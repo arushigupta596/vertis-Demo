@@ -43,14 +43,16 @@ export async function GET(req: NextRequest) {
       query = query.eq("page", parseInt(page));
     }
 
-    const { data: result, error } = await query.returns<TableRow[]>();
+    const { data: result, error } = await query;
 
     if (error) {
       throw new Error(`Failed to fetch tables: ${error.message}`);
     }
 
+    const typedResult = result as TableRow[];
+
     // Convert snake_case to camelCase for frontend
-    const formattedTables = result?.map(t => ({
+    const formattedTables = typedResult?.map(t => ({
       id: t.id,
       tableId: t.table_id,
       documentId: t.document_id,
