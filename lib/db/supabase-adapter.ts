@@ -6,9 +6,11 @@
 
 import { supabaseAdmin } from "../supabase";
 import type { documents, textChunks, tables, tableRows, chatMessages, ingestionLogs } from "./schema";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Use supabaseAdmin directly (it's a lazy-loading Proxy)
-const client = supabaseAdmin;
+// Cast to SupabaseClient to help TypeScript infer types
+const client = supabaseAdmin as unknown as SupabaseClient<any>;
 
 // Helper to convert Drizzle insert objects to Supabase format
 type InsertDocument = typeof documents.$inferInsert;
